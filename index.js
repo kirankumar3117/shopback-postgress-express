@@ -58,6 +58,39 @@ app.get("/products", async (req, res)=>{
     }
 });
 
-app.listen(3000, ()=>{
-    console.log('Shop Backend runnning on port 3000')
+app.post("/categories", async(req, res) => {
+    try{
+        const { name } = req.body;
+        const result = await pool.query(
+            'INSERT INTO categories (name) VALUES ($1) RETURNING *',
+            [name]
+        );
+        res.status(201).json(result.rows[0])
+    }catch(err){
+        console.log(err);
+        res.status(500).send('Internal server error')
+    }
+});
+
+app.get("/product-details", async(req, res)=>{
+    try{
+        const query = `
+        SELECT
+            p.id, 
+            p.name as product_name,
+            p.price,
+            c.name as category_name
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id;
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows)
+    }catch(err){
+        console.log(err);
+        res.status(500).send(err.message)
+    }
+})
+
+app.listen(8000, ()=>{
+    console.log('Shop Backend runnning on port 8000')
 })
